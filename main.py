@@ -1,8 +1,10 @@
+from sys import exit
+
 import pygame
 from pygame import *
+
 import methods
 import vars
-from sys import exit
 
 # Initialise
 pygame.init()
@@ -25,12 +27,6 @@ doux_sheet = methods.SpriteSheet(doux_sheet_image)
 mort_sheet_image = pygame.image.load("dinoCharactersVersion1.1/sheets/DinoSprites - mort.png").convert_alpha()
 mort_sheet = methods.SpriteSheet(mort_sheet_image)
 
-# Get frames
-mort_frame_0 = mort_sheet.get_image(0, 24, 24, 3, vars.Colors.BLACK).convert_alpha()
-mort_frame_0_left = pygame.transform.flip(mort_frame_0, True, False).convert_alpha()
-doux_frame_0 = doux_sheet.get_image(0, 24, 24, 3, vars.Colors.BLACK).convert_alpha()
-doux_frame_0_left = pygame.transform.flip(doux_frame_0, True, False).convert_alpha()
-
 # Player variables
 doux_vel = 5
 doux_gravity = 0
@@ -45,14 +41,17 @@ class mort_animations:
     all = mort_sheet.animation_list(24)
     all_left = mort_sheet.animation_list(24, "LEFT")
     idle = all[0:4]
-    run = all[5:11]
+    run = all[4:10]
+    kick = all[10:13]
+    hurt = all[14:17]
+    crouch = all[17:]
     idle_left = all_left[0:4]
     run_left = all_left[5:11]
     current_animation = idle
     frame = 0
     current_time = 0
     last_update = 0
-    cooldown = 200
+    cooldown = 150
     last_Key = "RIGHT"
 
 
@@ -60,20 +59,23 @@ class doux_animations:
     all = doux_sheet.animation_list(24)
     all_left = doux_sheet.animation_list(24, "LEFT")
     idle = all[0:4]
-    run = all[5:11]
+    run = all[4:10]
+    kick = all[10:13]
+    hurt = all[14:17]
+    crouch = all[17:]
     idle_left = all_left[0:4]
     run_left = all_left[5:11]
     current_animation = idle
     frame = 0
     current_time = 0
     last_update = 0
-    cooldown = 200
+    cooldown = 150
     last_Key = "RIGHT"
 
 
 # Player rectangles
-doux_rect0 = doux_frame_0.get_rect(bottomright=(50, 370))
-mort_rect0 = mort_frame_0.get_rect(bottomleft=(750, 370))
+doux_rect0 = doux_animations.all[0].get_rect(bottomright=(50, 370))
+mort_rect0 = mort_animations.all[0].get_rect(bottomleft=(750, 370))
 
 while True:
     # User input
@@ -107,7 +109,6 @@ while True:
             doux_animations.current_animation = doux_animations.idle
         else:
             doux_animations.current_animation = doux_animations.idle_left
-
     if key[K_RIGHT]:
         mort_rect0.x += mort_vel
         mort_animations.current_animation = mort_animations.run
@@ -138,6 +139,18 @@ while True:
         screen.blit(grass, (0 + i * vars.Grass.width, 350))
 
     # Players
+
+    doux_col_rect = Rect(doux_rect0.x+10, doux_rect0.y+10, 50, 55)
+    mort_col_rect = Rect(mort_rect0.x+10, mort_rect0.y+10, 50, 55)
+    if doux_col_rect.colliderect(mort_col_rect):
+        if mort_animations.frame < len(mort_animations.hurt):
+            mort_animations.current_animation = mort_animations.hurt
+        if doux_animations.frame < len(doux_animations.hurt):
+            doux_animations.current_animation = doux_animations.hurt
+
+    screen.blit(mort_animations.current_animation[mort_animations.frame], mort_rect0)
+    screen.blit(doux_animations.current_animation[doux_animations.frame], doux_rect0)
+
     mort_animations.current_time = pygame.time.get_ticks()
     if mort_animations.current_time - mort_animations.last_update >= mort_animations.cooldown:
         if mort_animations.frame + 1 < len(mort_animations.current_animation):
@@ -153,13 +166,6 @@ while True:
         else:
             doux_animations.frame = 0
         doux_animations.last_update = doux_animations.current_time
-
-    screen.blit(mort_animations.current_animation[mort_animations.frame], mort_rect0)
-    screen.blit(doux_animations.current_animation[doux_animations.frame], doux_rect0)
-
-    # Collisions
-    if doux_rect0.colliderect(mort_rect0):
-        print("collision")
 
     # Fps
     fps_text = basic_font.render(str(fps), True, "Black")
