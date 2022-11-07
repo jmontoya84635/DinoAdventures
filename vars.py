@@ -1,6 +1,6 @@
 class Screen:
-    width = 800
-    height = 400
+    width = 1920
+    height = 1080
 
 
 class Colors:
